@@ -4,113 +4,118 @@ import time
 
 WIDTH = 800
 HEIGHT = 600
-RACKET_HEIGHT = 100
+USER_RACKET_HEIGHT = 100
+COM_RACKET_HEIGHT = 300
 RACKET_WIDTH = 10
-COM_SPEED = 7.0
+COM_SPEED = 10
+
 ball_x = WIDTH / 2  # 75
 ball_y = HEIGHT / 2 # 75
 ball_r = 10     # 공 반지름
-ball_speed_x = random.randint(-8, 8)    # 공의 x좌표가 이동할 때 속도 설정. 너무 느리거나 0이 되지 않도록 함
-if ball_speed_x >= -4 and ball_speed_x <= 4:
-    ball_speed_x = -5
-ball_speed_y = random.randint(-8, 8)     # 공의 y좌표가 이동할 때 속도 설정. 0이 되지 않도록 함
-if ball_speed_y == 0:
-    ball_speed_y = 1
+ball_speed_x = random.choice([-8, -7, -6, -5, 5, 6, 7, 8])    # 공의 x좌표가 이동할 때 속도 설정
+ball_speed_y = random.choice([-5, 5])     # 공의 y좌표가 이동할 때 속도 설정. 0이 되지 않도록 함
 user_score = 0
 com_score = 0
 com_y = 250
 mouse_pos = (0, 0)
 
+# 공 그리기
 def draw_ball():
     global ball_x, ball_y, ball_speed_x, ball_speed_y
     pg.draw.circle(GAME_SCREEN, (255, 255, 255), (ball_x, ball_y), ball_r)
     ball_x += ball_speed_x
     ball_y += ball_speed_y
 
+# 유저 라켓 그리기
 def draw_user_racket():
     if pos[1] <= 500:
-        pg.draw.rect(GAME_SCREEN, (255, 255, 255), (0, pos[1], 10, 100))
+        pg.draw.rect(GAME_SCREEN, (255, 255, 255), (0, pos[1], RACKET_WIDTH, USER_RACKET_HEIGHT))
     else:
-        pg.draw.rect(GAME_SCREEN, (255, 255, 255), (0, 500, 10, 100))
-    
+        pg.draw.rect(GAME_SCREEN, (255, 255, 255), (0, 500, RACKET_WIDTH, USER_RACKET_HEIGHT))
+
+# 컴퓨터 라켓 그리기
 def draw_com_racket():
     global com_y, COM_SPEED
-    pg.draw.rect(GAME_SCREEN, (255, 255, 255), (790, com_y, 10, 300))
+    pg.draw.rect(GAME_SCREEN, (255, 255, 255), (790, com_y, RACKET_WIDTH, COM_RACKET_HEIGHT))
     com_y += COM_SPEED
-    if com_y < 0 or com_y > 300:
-        COM_SPEED *= -1
     
-    if com_y > 0 and com_y < 300:
-        if com_y + 50 < ball_y and COM_SPEED < 0 or com_y + 50 > ball_y and COM_SPEED > 0:
-            COM_SPEED *= -1
-    
+    # 라켓이 화면을 벗어나지 않으면서 자동으로 공을 따라가도록 함 | (참고) com_y의 범위는 0~300
+    if com_y + 100 < ball_y < com_y + COM_RACKET_HEIGHT - 100:
+        COM_SPEED = 0
+    elif ball_y < com_y + 100:
+        if com_y <= 0:
+            com_y = 0
+            COM_SPEED = 0
+        else:
+            COM_SPEED = -10
+    elif ball_y > com_y + COM_RACKET_HEIGHT - 100:
+        if com_y >= 300:
+            com_y = 300
+            COM_SPEED = 0
+        else:
+            COM_SPEED = 10
+
+# 네트 그리기
 def draw_net():
     for x in range(5):
         sy = 10 + 120 * x
         ey = 110 + 120 * x
         pg.draw.line(GAME_SCREEN, (255, 255, 255), (WIDTH / 2, sy), (WIDTH / 2, ey), 3)
-        
+
+# 점수 그리기
 def draw_score():
-    user = FONT_40.render("P1:" + str(user_score), True, (255, 255, 255))
+    user = FONT_40.render("USER:" + str(user_score), True, (255, 255, 255))
     com = FONT_40.render("COM:" + str(com_score), True, (255, 255, 255))
     GAME_SCREEN.blit(user, (10, 10))
     GAME_SCREEN.blit(com, (650, 10))
 
-# 오브젝트의 이동을 연산하는 함수 - 공의 이동, 라켓의 이동, 충돌여부 계산
-def calc_ball():
-    global ball_x, ball_y, ball_speed_x, ball_speed_y, user_score, com_score
-    if ball_x <= 10:
-        ball_speed_x = 0
-        com_score += 1
-        ball_x = WIDTH / 2
-        ball_y = HEIGHT / 2
-        ball_speed_x = random.randint(-8, 8)
-        if ball_speed_x >= -4 and ball_speed_x <= 4:
-            ball_speed_x = -5
-        ball_speed_y = random.randint(-4, 4)
-        if ball_speed_y == 0:
-            ball_speed_y = 1
-    elif ball_x >= 790:
-        ball_speed_x = 0
-        user_score += 1
-        ball_x = WIDTH / 2
-        ball_y = HEIGHT / 2
-        ball_speed_x = random.randint(-8, 8)
-        if ball_speed_x >= -4 and ball_speed_x <= 4:
-            ball_speed_x = -5
-        ball_speed_y = random.randint(-4, 4)
-        if ball_speed_y == 0:
-            ball_speed_y = 1
+# 난이도 상을 위해 공이 라켓과 부딪힐 때마다 공을 가속
+def ball_acceleration():
+    global ball_speed_x, ball_speed_y
+    if ball_speed_x > 0:
+        ball_speed_x += 2
     else:
-        pass
+        ball_speed_x -= 2
+    if ball_speed_y > 0:
+        ball_speed_y += 2
+    else:
+        ball_speed_y -= 2
 
-    if ball_y < 20 or ball_y > 580:
+# 공을 새로 세팅
+def ball_set():
+    global ball_x, ball_y, ball_speed_x, ball_speed_y
+    ball_x = WIDTH / 2
+    ball_y = HEIGHT / 2
+    ball_speed_x = random.choice([-8, -7, -6, -5, 5, 6, 7, 8])
+    ball_speed_y = random.choice([-5, 5])
+
+# 공의 이동, 벽/라켓과의 충돌 계산
+def calc_ball():
+    global ball_speed_x, ball_speed_y, user_score, com_score
+    if ball_y < ball_r * 2 or ball_y > HEIGHT - ball_r * 2:
         ball_speed_y *= -1
     else:
         pass
-
-    if ball_x <= 20 and pos[1] - 10 < ball_y < pos[1] + 110:
-        ball_speed_x *= -1
-        if ball_speed_x > 0:
-            ball_speed_x += random.randint(1, 3)
-        else:
-            ball_speed_x -= random.randint(1, 3)
-        if ball_speed_y > 0:
-            ball_speed_y += random.randint(1, 2)
-        else:
-            ball_speed_y -= random.randint(1, 2)
     
-    if ball_x >= WIDTH - 20 and com_y - 10 < ball_y < com_y + 310:
-        ball_speed_x *= -1
-        if ball_speed_x > 0:
-            ball_speed_x += random.randint(1, 3)
+    if ball_x <= 2 * ball_r:
+        if pos[1] - ball_r < ball_y < pos[1] + USER_RACKET_HEIGHT + ball_r or pos[1] > 500 and ball_y > 500:
+            ball_speed_x = abs(ball_speed_x)
+            ball_acceleration()
         else:
-            ball_speed_x -= random.randint(1, 3)
-        if ball_speed_y > 0:
-            ball_speed_y += random.randint(1, 2)
+            if ball_x <= 0:
+                com_score += 1
+                ball_set()
+    elif ball_x >= WIDTH - 2 * ball_r:
+        if com_y - ball_r < ball_y < com_y + COM_RACKET_HEIGHT + ball_r:
+            ball_speed_x = -1 * abs(ball_speed_x)
+            ball_acceleration()
         else:
-            ball_speed_y -= random.randint(1, 2)
-
+            if ball_x >= 800:
+                user_score += 1
+                ball_set()
+    else:
+        pass
+        
 pg.init()
 pg.display.set_caption("테니스 게임")
 pg.key.set_repeat(1, 5)
