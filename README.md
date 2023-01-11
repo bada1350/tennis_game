@@ -7,7 +7,7 @@
 <br><br><br>
 
 ## 사용법
-다운로드 후 <code>pg_tennis_game.py</code> 실행
+다운로드 후 <code>pg_tennis_game.py</code> 코드 실행
 <br><br><br>
 
 ## 실행 화면
