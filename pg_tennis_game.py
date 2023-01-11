@@ -7,17 +7,21 @@ HEIGHT = 600
 USER_RACKET_HEIGHT = 100
 COM_RACKET_HEIGHT = 300
 RACKET_WIDTH = 10
-COM_SPEED = 10
+COM_SPEED = 15
 
-ball_x = WIDTH / 2  # 75
-ball_y = HEIGHT / 2 # 75
-ball_r = 10     # 공 반지름
-ball_speed_x = random.choice([-8, -7, -6, -5, 5, 6, 7, 8])    # 공의 x좌표가 이동할 때 속도 설정
-ball_speed_y = random.choice([-5, 5])     # 공의 y좌표가 이동할 때 속도 설정. 0이 되지 않도록 함
+ball_x = WIDTH / 2
+ball_y = HEIGHT / 2
+ball_r = 10                                                     # 공 반지름
+ball_speed_x = random.choice([-8, -7, -6, -5, 5, 6, 7, 8])      # 공의 x좌표가 이동할 때 속도 설정
+ball_speed_y = random.choice([-5, 5])                           # 공의 y좌표가 이동할 때 속도 설정. 0이 되지 않도록 함
 user_score = 0
 com_score = 0
 com_y = 250
 mouse_pos = (0, 0)
+
+GAME_INTRO = True
+GAME_RUNNING = True
+ENDING_SCREEN = False
 
 # 공 그리기
 def draw_ball():
@@ -67,9 +71,9 @@ def draw_score():
     user = FONT_40.render("USER:" + str(user_score), True, (255, 255, 255))
     com = FONT_40.render("COM:" + str(com_score), True, (255, 255, 255))
     GAME_SCREEN.blit(user, (10, 10))
-    GAME_SCREEN.blit(com, (650, 10))
+    GAME_SCREEN.blit(com, (620, 10))
 
-# 난이도 상을 위해 공이 라켓과 부딪힐 때마다 공을 가속
+# 난이도 상승을 위해 공이 라켓과 부딪힐 때마다 공을 가속
 def ball_acceleration():
     global ball_speed_x, ball_speed_y
     if ball_speed_x > 0:
@@ -115,20 +119,55 @@ def calc_ball():
                 ball_set()
     else:
         pass
+
+# 게임 시작 화면 그리기
+def draw_intro():
+    GAME_SCREEN.fill((0, 0, 0))
+    game_name_txt = FONT_72.render("테니스 게임", True, (255, 255, 255))
+    copyright_display_txt = FONT_40.render("made by bada1350", True, (255, 255, 0))
+    how_to_play_txt_1 = FONT_40.render("[조작 방법]", True, (255, 255, 255))
+    how_to_play_txt_2 = FONT_40.render("이동 - 마우스", True, (255, 255, 255))
+    how_to_play_txt_3 = FONT_40.render("게임 종료 - q", True, (255, 255, 255))
+    game_start_txt = FONT_40.render("PRESS ANY KEY TO START", True, (255, 255, 255))
+    
+    GAME_SCREEN.blit(game_name_txt, (50, 70))
+    GAME_SCREEN.blit(copyright_display_txt, (50, 150))
+    GAME_SCREEN.blit(how_to_play_txt_1, (50, 280))
+    GAME_SCREEN.blit(how_to_play_txt_2, (50, 340))
+    GAME_SCREEN.blit(how_to_play_txt_3, (50, 400))
+    GAME_SCREEN.blit(game_start_txt, (160, 520))
+
+# 게임 결과 화면 그리기
+def draw_ending():
+    GAME_SCREEN.fill((0, 0, 0))
+    game_result_txt_1 = FONT_72.render("RESULT - " + str(user_score) + " : " + str(com_score), True, (255, 255, 0))
+    if user_score > com_score:
+        game_result_txt_2 = FONT_72.render("USER WIN", True, (255, 255, 255))
+    elif user_score < com_score:
+        game_result_txt_2 = FONT_72.render("COM WIN", True, (255, 255, 255))
+    else:
+        pass
+    game_end_txt = FONT_40.render("PRESS <Q> TO QUIT", True, (255, 255, 255))
+    
+    GAME_SCREEN.blit(game_result_txt_1, (150, 180))
+    GAME_SCREEN.blit(game_result_txt_2, (150, 260))
+    GAME_SCREEN.blit(game_end_txt, (220, 520))
         
 pg.init()
 pg.display.set_caption("테니스 게임")
-pg.key.set_repeat(1, 5)
 GAME_SCREEN = pg.display.set_mode((WIDTH, HEIGHT))
-FONT_40 = pg.font.Font("nanum-gothic/NanumGothic.ttf", 40)
 
-GAME_RUNNING = True
+FONT_40 = pg.font.Font("nanum-gothic/NanumGothic.ttf", 40)
+FONT_72 = pg.font.Font("nanum-gothic/NanumGothic.ttf", 72)
+
+# 메인 게임 루프
 pos = (0, 0)
 while GAME_RUNNING:
     for event in pg.event.get():
         if event.type == pg.QUIT:
             GAME_RUNNING = False
         elif event.type == pg.KEYDOWN:
+            GAME_INTRO = False
             if event.key == pg.K_q:
                 GAME_RUNNING = False
             else:
@@ -136,24 +175,34 @@ while GAME_RUNNING:
         else:
             pass
     
-    # 배경 그리기
-    GAME_SCREEN.fill((0, 0, 0))
-    draw_net()
+    if ENDING_SCREEN == False:
+        if GAME_INTRO == True:
+            draw_intro()
+        else:
+            # 배경 그리기
+            GAME_SCREEN.fill((0, 0, 0))
+            draw_net()
 
-    # 오브젝트 계산 및 그리기
-    pos = pg.mouse.get_pos()
-    msg = str(pos[0]) + "," + str(pos[1])
-    msg_img = FONT_40.render(msg, True, (255, 0, 0))
-    GAME_SCREEN.blit(msg_img, pos)
+            # 오브젝트 계산 및 그리기
+            pos = pg.mouse.get_pos()
+            msg = str(pos[0]) + "," + str(pos[1])
+            pos_txt = FONT_40.render(msg, True, (255, 0, 0))
+            GAME_SCREEN.blit(pos_txt, pos)
+            
+            if user_score == 10 or com_score == 10:
+                ENDING_SCREEN = True
 
-    draw_user_racket()
-    draw_com_racket()
-    draw_ball()
-    draw_score()
+            draw_user_racket()
+            draw_com_racket()
+            draw_ball()
+            draw_score()
 
-    calc_ball()
-    
+            calc_ball()
+    else:
+        draw_ending()
+            
     # 화면 업데이트 및 업데이트 간격 설정
     pg.display.update()
     time.sleep(0.03)
+
 pg.quit()
