@@ -13,7 +13,7 @@ ball_x = WIDTH / 2
 ball_y = HEIGHT / 2
 ball_r = 10                                                     # 공 반지름
 ball_speed_x = random.choice([-8, -7, -6, -5, 5, 6, 7, 8])      # 공의 x좌표가 이동할 때 속도 설정
-ball_speed_y = random.choice([-5, 5])                           # 공의 y좌표가 이동할 때 속도 설정. 0이 되지 않도록 함
+ball_speed_y = random.choice([-5, 5])                           # 공의 y좌표가 이동할 때 속도 설정
 user_score = 0
 com_score = 0
 com_y = 250
@@ -30,7 +30,7 @@ def draw_ball():
     ball_x += ball_speed_x
     ball_y += ball_speed_y
 
-# 유저 라켓 그리기
+# 플레이어 라켓 그리기
 def draw_user_racket():
     if pos[1] <= 500:
         pg.draw.rect(GAME_SCREEN, (255, 255, 255), (0, pos[1], RACKET_WIDTH, USER_RACKET_HEIGHT))
@@ -96,23 +96,28 @@ def ball_set():
 # 공의 이동, 벽/라켓과의 충돌 계산
 def calc_ball():
     global ball_speed_x, ball_speed_y, user_score, com_score
+    # 공이 위쪽/아래쪽 벽과 충돌한 경우
     if ball_y < ball_r * 2 or ball_y > HEIGHT - ball_r * 2:
         ball_speed_y *= -1
     else:
         pass
     
     if ball_x <= 2 * ball_r:
+        # 공이 플레이어 라켓과 충돌한 경우
         if pos[1] - ball_r < ball_y < pos[1] + USER_RACKET_HEIGHT + ball_r or pos[1] > 500 and ball_y > 500:
             ball_speed_x = abs(ball_speed_x)
             ball_acceleration()
+        # 플레이어가 실점한 경우
         else:
             if ball_x <= 0:
                 com_score += 1
                 ball_set()
     elif ball_x >= WIDTH - 2 * ball_r:
+        # 공이 컴퓨터 라켓과 충돌한 경우
         if com_y - ball_r < ball_y < com_y + COM_RACKET_HEIGHT + ball_r:
             ball_speed_x = -1 * abs(ball_speed_x)
             ball_acceleration()
+        # 컴퓨터가 실점한 경우
         else:
             if ball_x >= 800:
                 user_score += 1
@@ -183,12 +188,14 @@ while GAME_RUNNING:
             GAME_SCREEN.fill((0, 0, 0))
             draw_net()
 
-            # 오브젝트 계산 및 그리기
+            '''오브젝트 계산 및 그리기'''
+            # 화면에 마우스 커서 좌표 그리기
             pos = pg.mouse.get_pos()
             msg = str(pos[0]) + "," + str(pos[1])
             pos_txt = FONT_40.render(msg, True, (255, 0, 0))
             GAME_SCREEN.blit(pos_txt, pos)
             
+            # 한 선수가 10점을 득점하면 게임을 종료
             if user_score == 10 or com_score == 10:
                 ENDING_SCREEN = True
 
