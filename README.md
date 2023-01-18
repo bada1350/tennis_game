@@ -3,7 +3,7 @@
 <br><br><br>
 
 ## 코드 설명
-*PPT를 참고 바랍니다.*
+[[pygame] 테니스 게임.pdf](https://github.com/bada1350/tennis_game/files/10448326/pygame.pdf)
 <br><br><br>
 
 ## 사용법
